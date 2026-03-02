@@ -1,14 +1,8 @@
-// Scolia Color Changer v5
-// Strategy: Replace colors in <style> tags and CSS rules TEXT directly
-// This preserves transparency/alpha correctly since we only swap the hue
-
 const DEFAULT_GREEN = '#5aab30';
 let currentColor = DEFAULT_GREEN;
 let observer = null;
 let patchInterval = null;
 let _insertRuleHooked = false;
-
-// ─── Color math ───────────────────────────────────────────────────────────────
 
 function hexToRgb(hex) {
   const h = hex.replace('#','');
@@ -33,7 +27,6 @@ function isGreen(hex) {
   try{const{h,s,l}=hexToHsl(hex);return h>=75&&h<=175&&s>12&&l>3&&l<97;}catch(e){return false;}
 }
 
-// Remap a green hex to the equivalent shade of target color, preserving lightness
 function remap(srcHex, tgtHex) {
   try {
     const s=hexToHsl(srcHex), t=hexToHsl(tgtHex);
@@ -54,22 +47,17 @@ function parseColorStr(val) {
   return null;
 }
 
-// ─── The key function: replace green colors in a CSS text string ──────────────
-// This correctly preserves rgba() alpha values!
-
 function patchCSSText(css, tgt) {
   if(!css || typeof css !== 'string') return css;
   
-  // Replace rgba(r,g,b,a) - MUST come before rgb() to avoid partial match
   css = css.replace(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/g, (match,r,g,b,a) => {
     const hex = rgbToHex(+r,+g,+b);
     if(!isGreen(hex)) return match;
     const mapped = remap(hex, tgt);
     const {r:nr,g:ng,b:nb} = hexToRgb(mapped);
-    return `rgba(${nr},${ng},${nb},${a})`; // alpha preserved!
+    return `rgba(${nr},${ng},${nb},${a})`;
   });
 
-  // Replace rgb(r,g,b)
   css = css.replace(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g, (match,r,g,b) => {
     const hex = rgbToHex(+r,+g,+b);
     if(!isGreen(hex)) return match;
@@ -78,7 +66,6 @@ function patchCSSText(css, tgt) {
     return `rgb(${nr},${ng},${nb})`;
   });
 
-  // Replace hex colors #rrggbb and #rgb
   css = css.replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g, (match) => {
     let hex = match;
     if(hex.length===4) hex='#'+hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];
@@ -88,8 +75,6 @@ function patchCSSText(css, tgt) {
 
   return css;
 }
-
-// ─── Patch <style> tags ───────────────────────────────────────────────────────
 
 function patchStyleEl(el, tgt) {
   if(!el || el.id.startsWith('scolia-')) return;
@@ -103,9 +88,6 @@ function patchAllStyleEls(tgt) {
   document.querySelectorAll('style').forEach(el => patchStyleEl(el, tgt));
 }
 
-// ─── Patch inline [style] attributes ─────────────────────────────────────────
-// Only patch color/border/outline/shadow - NOT background-color of transparent elements!
-
 function patchInlineStyle(el, tgt) {
   const attr = el.getAttribute('style');
   if(!attr) return;
@@ -116,8 +98,6 @@ function patchInlineStyle(el, tgt) {
 function patchAllInlineStyles(tgt) {
   document.querySelectorAll('[style]').forEach(el => patchInlineStyle(el, tgt));
 }
-
-// ─── Patch SVG fill/stroke attributes ────────────────────────────────────────
 
 function patchSVGEl(el, tgt) {
   for(const attr of ['fill','stroke','stop-color','color']) {
@@ -131,9 +111,6 @@ function patchSVGEl(el, tgt) {
 function patchAllSVG(tgt) {
   document.querySelectorAll('[fill],[stroke],[stop-color]').forEach(el => patchSVGEl(el, tgt));
 }
-
-// ─── Patch CSSOM (already-applied rules in CSSStyleSheet objects) ─────────────
-// This is the main one that catches Tailwind's compiled classes
 
 function patchCSSRule(rule, tgt) {
   if(!rule.style) return;
@@ -167,8 +144,6 @@ function patchAllCSSOM(tgt) {
   } catch(e) {}
 }
 
-// ─── CSS variable override ────────────────────────────────────────────────────
-
 function patchCSSVars(tgt) {
   const entries = [];
   try {
@@ -193,8 +168,6 @@ function patchCSSVars(tgt) {
   el.textContent = entries.length ? `:root { ${entries.join('; ')} }` : '';
 }
 
-// ─── Hook insertRule so future dynamic CSS injections are also patched ─────────
-
 function hookInsertRule(tgt) {
   if(_insertRuleHooked) return;
   _insertRuleHooked = true;
@@ -203,8 +176,6 @@ function hookInsertRule(tgt) {
     return orig.call(this, patchCSSText(rule, currentColor), idx!==undefined?idx:0);
   };
 }
-
-// ─── MutationObserver ─────────────────────────────────────────────────────────
 
 function startObserver(tgt) {
   if(observer) observer.disconnect();
@@ -239,20 +210,16 @@ function startObserver(tgt) {
   });
 }
 
-// ─── Main apply ───────────────────────────────────────────────────────────────
-
 function applyColor(tgt) {
   currentColor = tgt;
   hookInsertRule(tgt);
   patchCSSVars(tgt);
   patchAllStyleEls(tgt);
-  patchAllCSSOM(tgt);       // ← patches compiled Tailwind classes in CSSOM
+  patchAllCSSOM(tgt);
   patchAllInlineStyles(tgt);
   patchAllSVG(tgt);
   startObserver(tgt);
 }
-
-// ─── Messages + init ──────────────────────────────────────────────────────────
 
 window.addEventListener('message', e => {
   if(e.source===window && e.data?.type==='SCOLIA_COLOR_CHANGE') {

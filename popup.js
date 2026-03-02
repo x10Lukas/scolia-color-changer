@@ -39,7 +39,6 @@ function updateUI(color) {
   document.documentElement.style.setProperty('--accent', color);
   document.documentElement.style.setProperty('--accent-glow', glow);
 
-  // Update color name label
   const preset = PRESETS.find(p => p.color.toLowerCase() === color.toLowerCase());
   document.getElementById('colorName').textContent = preset ? preset.label : 'Eigene Farbe';
 
@@ -77,7 +76,6 @@ async function sendColorToTab(color) {
   const isScolia = tab.url && (tab.url.includes('scoliadarts.com'));
   if (!isScolia) return false;
 
-  // Inject via executeScript which calls window.postMessage
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: (color) => {
@@ -100,7 +98,6 @@ async function applyColor() {
     const sent = await sendColorToTab(currentColor);
     if (sent) {
       showStatus('✓ Farbe wird angewendet...');
-      // Also reload after a short delay if user wants
     }
   } else {
     showStatus('Farbe gespeichert! Öffne Scolia und lade neu.', false);
@@ -119,7 +116,6 @@ async function applyAndReload() {
   }
 }
 
-// Init
 buildPresets();
 
 chrome.storage.local.get(['scoliaColor'], (result) => {
