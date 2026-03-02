@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Scolia Color Changer",
+  "version": "5.0",
+  "description": "Ändere die grüne Farbe auf Scolia nach deinem Geschmack",
+  "icons": {
+    "16": "scolia_logo16.png",
+    "48": "scolia_logo48.png",
+    "128": "scolia_logo128.png"
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": [
+    "*://game.scoliadarts.com/*",
+    "*://scoliadarts.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "scolia_logo16.png",
+      "48": "scolia_logo48.png",
+      "128": "scolia_logo128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://game.scoliadarts.com/*", "*://scoliadarts.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
