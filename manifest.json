@@ -4,9 +4,9 @@
   "version": "5.0",
   "description": "Ändere die grüne Farbe auf Scolia nach deinem Geschmack",
   "icons": {
-    "16": "scolia_logo16.png",
-    "48": "scolia_logo48.png",
-    "128": "scolia_logo128.png"
+    "16": "img/scolia_logo16.png",
+    "48": "img/scolia_logo48.png",
+    "128": "img/scolia_logo128.png"
   },
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
@@ -16,9 +16,9 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "scolia_logo16.png",
-      "48": "scolia_logo48.png",
-      "128": "scolia_logo128.png"
+      "16": "img/scolia_logo16.png",
+      "48": "img/scolia_logo48.png",
+      "128": "img/scolia_logo128.png"
     }
   },
   "content_scripts": [
